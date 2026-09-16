@@ -182,6 +182,8 @@ export interface WizardReviewProps {
    *  frontend pick. */
   readonly frontend: Pick<MapPick, "name" | "logo"> | null;
   readonly backend: Pick<MapPick, "name" | "logo"> | null;
+  readonly backendFixed?: boolean;
+  readonly agent?: "yes" | "no" | null;
   /** The selected features, already filtered to the reader's choices and in
    *  display order — this component does not know about `featureIds`, only
    *  the resulting list. Empty renders a muted "None"; the row still
@@ -202,19 +204,36 @@ export function WizardReview({
   project,
   frontend,
   backend,
+  backendFixed = false,
+  agent,
   features,
   onNavigate,
 }: WizardReviewProps): React.JSX.Element {
   return (
     <div className={PANEL_CLASS}>
-      <ReviewRow
-        step={1}
-        kicker="Project"
-        changeLabel="Change project"
-        onChange={(pointerActivated) => onNavigate(1, pointerActivated)}
-      >
-        {project ? <ProjectValue project={project} /> : NONE_VALUE}
-      </ReviewRow>
+      {backendFixed && (
+        <ReviewRow
+          step={1}
+          kicker="Setup"
+          changeLabel="Change agent starting point"
+          onChange={(pointer) => onNavigate(0, pointer)}
+        >
+          <span className="text-sm font-semibold">
+            {agent === "yes" ? "Existing agent" : "New agent"} ·{" "}
+            {project === "yes" ? "Existing app" : "New app"}
+          </span>
+        </ReviewRow>
+      )}
+      {!backendFixed && (
+        <ReviewRow
+          step={1}
+          kicker="Project"
+          changeLabel="Change project"
+          onChange={(pointerActivated) => onNavigate(1, pointerActivated)}
+        >
+          {project ? <ProjectValue project={project} /> : NONE_VALUE}
+        </ReviewRow>
+      )}
       <ReviewRow
         step={2}
         kicker="Frontend"
@@ -227,20 +246,34 @@ export function WizardReview({
           NONE_VALUE
         )}
       </ReviewRow>
+      {backendFixed ? (
+        <div className="grid grid-cols-[1.5rem_1fr_auto] sm:flex items-center gap-3 px-4 py-3.5">
+          <span className="h-6 w-6 shrink-0" aria-hidden="true" />
+          <span className={ROW_LABEL_CLASS}>Agent backend</span>
+          <span className="order-4 col-span-3 sm:order-none flex min-w-0 flex-1">
+            {backend ? (
+              <PickValue name={backend.name} logo={backend.logo} />
+            ) : (
+              NONE_VALUE
+            )}
+          </span>
+        </div>
+      ) : (
+        <ReviewRow
+          step={3}
+          kicker="Agent backend"
+          changeLabel="Change agent backend"
+          onChange={(pointerActivated) => onNavigate(3, pointerActivated)}
+        >
+          {backend ? (
+            <PickValue name={backend.name} logo={backend.logo} />
+          ) : (
+            NONE_VALUE
+          )}
+        </ReviewRow>
+      )}
       <ReviewRow
-        step={3}
-        kicker="Agent backend"
-        changeLabel="Change agent backend"
-        onChange={(pointerActivated) => onNavigate(3, pointerActivated)}
-      >
-        {backend ? (
-          <PickValue name={backend.name} logo={backend.logo} />
-        ) : (
-          NONE_VALUE
-        )}
-      </ReviewRow>
-      <ReviewRow
-        step={4}
+        step={backendFixed ? 3 : 4}
         kicker="Features"
         changeLabel="Change features"
         onChange={(pointerActivated) => onNavigate(4, pointerActivated)}
